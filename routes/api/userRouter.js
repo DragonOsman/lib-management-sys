@@ -15,35 +15,36 @@ userRouter.options("*", cors.corsWithOptions, (req, res) => {
 });
 
 userRouter.get("/", cors.corsWithOptions, authenticate.verifyUser,
-  authenticate.verifyAdmin, (req, res, next) => {
-    User.find({})
-      .then((users) => {
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "application/json");
-        res.json(users);
-      }, (err) => next(err))
-      .catch((err) => next(err))
-    ;
+  authenticate.verifyAdmin, async (req, res, next) => {
+    try {
+      const users = await User.find({});
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.json(users);
+    } catch (err) {
+      next(err);
+    }
   })
 ;
 
-userRouter.put("/:userId", cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-  User.findByIdAndUpdate(req.params.userId, {
-    $set: req.body
-  }, { new: true })
-    .then((user) => {
-      res.statusCode = 200;
-      res.setHeader("Content-Type", "application/json");
-      res.json(user);
-    }, (err) => next(err))
-    .catch((err) => res.status(400).json({ message: `error occurred: ${err}`, success: false }))
-  ;
+userRouter.put("/:userId", cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.userId, {
+      $set: req.body
+    }, { new: true });
+    res.statusCode = 200;
+    res.setHeader("Content-Type", "application/json");
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // For changing user's password
-userRouter.put("/password/:userId", cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-  User.findById(req.params.userId)
-    .then((user) => {
+userRouter.put("/password/:userId", cors.corsWithOptions, authenticate.verifyUser,
+  async (req, res, next) => {
+    try {
+      const user = await User.findById(req.params.userId);
       if (user && !user.admin) {
         user.setPassword(req.body.password, () => {
           user.save();
@@ -56,9 +57,9 @@ userRouter.put("/password/:userId", cors.corsWithOptions, authenticate.verifyUse
           message: "Password of an admin can't be changed this way.\nContact the webmaster"
         });
       }
-    }, (err) => next(err))
-    .catch((err) => res.status(400).json({ message: `Internal server error: ${err}` }))
-  ;
+    } catch (err) {
+      next(err);
+    }
 });
 
 userRouter.post("/signup", cors.corsWithOptions, (req, res, next) => {
