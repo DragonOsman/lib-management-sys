@@ -194,7 +194,7 @@ issueRouter.route("/:issueId")
                       success: false, message: `${err}. Book not updated`
                     }))
                   ;
-                } err => next(err))
+                }, err => next(err))
                 .catch(err => res.statusCode(400).json({
                   success: false, message: `${err}. Issue not updated`
                 }))
