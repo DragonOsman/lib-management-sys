@@ -10,26 +10,28 @@ bookRouter.use(bodyParser.json());
 
 bookRouter.route("/")
   .options(cors.corsWithOptions, (req, res) => res.sendStatus(200))
-  .get(cors.corsWithOptions, (req, res) => {
-    Books.find(req.query)
-      .sort({ name: "asc" })
-      .then(books => {
-        res.statusCode = 200;
-        res.setHeader("Content-Type", "application/json");
-        res.json(books);
-      }, err => (next(err)))
-      .catch(err => (next(err)))
-    ;
+  .get(cors.corsWithOptions, async (req, res) => {
+    try {
+      const books = await Books.find(req.query)
+        .sort({ name: "asc" })
+      ;
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.json(books);
+    } catch (err) {
+      next(err);
+    }
   })
-  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Books.create(req.body)
-      .then(book => {
+  .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,
+    async (req, res, next) => {
+      try {
+        const book = await Books.create(req.body);
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
         res.json(book);
-      }, err => next(err))
-      .catch(err => (next(err)))
-    ;
+      } catch (err) {
+        next(err);
+      }
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
@@ -46,44 +48,43 @@ bookRouter.route("/:bookId")
     res.sendStatus(200);
     res.setHeader("Access-Control-Allow-Credentials", "true");
   })
-  .get(cors.corsWithOptions, (req, res, next) => {
-    Books.findById(req.params.bookId)
-      .then(book => {
-        res.setStatus = 200;
-        res.setHeader("Content-Type", "application/json");
-        res.json(book);
-      }, err => (next(err)))
-      .catch(err => (next(err)))
-    ;
+  .get(cors.corsWithOptions, async (req, res, next) => {
+    try {
+      const book = await Books.findById(req.params.bookId);
+      res.statusCode = 200;
+      res.setHeader("Content-Type", "application/json");
+      res.json(book);
+    } catch (err) {
+      next(err);
+    }
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
     res.statusCode = 403;
     res.end(`POST operation not supported on /books/${req.params.bookId}`);
   })
-  .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Books.findByIdAndUpdate(req.params.bookId, {
-      $set: req.body
-    }, { new: true })
-      .then(book => {
+  .put(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,
+    async (req, res, next) => {
+      try {
+        const book = await Books.findByIdAndUpdate(req.params.bookId, {
+          $set: req.body
+        }, { new: true });
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
         res.json(book);
-      }, err => (next(err)))
-      .catch(err => next(err))
-    ;
+      } catch (err) {
+        next(err);
+      }
   })
-  .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-    Books.findByIdAndRemove(req.params.bookId)
-      .then(() => {
+  .delete(cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin,
+    async (req, res, next) => {
+      try {
+        await Books.findByIdAndRemove(req.params.bookId);
         res.statusCode = 200;
         res.setHeader("Content-Type", "application/json");
         res.json({ _id: req.params.bookId, success: true })
-      }, err => next(err))
-      .catch(err => {
-        res.statusCode = 400;
-        res.json({ success: false, msg: `Error occurred: ${err}` });
-      })
-    ;
+      } catch (err) {
+        next(err);
+      }
   })
 ;
 
